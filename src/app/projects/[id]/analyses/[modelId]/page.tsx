@@ -21,6 +21,13 @@ import {
 } from "@/components/analyses/schema-form";
 import { StreamingResult } from "@/components/analyses/streaming-result";
 import type { AnalysisOutput } from "@/lib/analysis-output";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,6 +51,9 @@ export default function RunAnalysisPage() {
   const [complete, setComplete] = useState(false);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [factualityLevel, setFactualityLevel] = useState<
+    "strict" | "balanced" | "exploratory"
+  >("balanced");
 
   if (!model) {
     return (
@@ -54,7 +64,7 @@ export default function RunAnalysisPage() {
             { label: "Onbekend model" },
           ]}
         />
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <p className="text-[var(--gray)]">Dit model bestaat niet.</p>
           <Button asChild className="mt-4">
             <Link href={`/projects/${projectId}/analyses/new`}>Terug</Link>
@@ -84,6 +94,7 @@ export default function RunAnalysisPage() {
           projectId,
           modelId: model.id,
           inputData,
+          factualityLevel,
           stream: true,
         }),
       });
@@ -159,7 +170,7 @@ export default function RunAnalysisPage() {
           </Button>
         }
       />
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-6 p-4 sm:p-6">
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
@@ -186,6 +197,35 @@ export default function RunAnalysisPage() {
                   onChange={setField}
                   disabled={running}
                 />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-[var(--navy)]">Feitelijkheidsgraad</p>
+                  <Select
+                    value={factualityLevel}
+                    onValueChange={(value) =>
+                      setFactualityLevel(value as "strict" | "balanced" | "exploratory")
+                    }
+                    disabled={running}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="strict">
+                        Feitelijk (alleen onderbouwde uitspraken)
+                      </SelectItem>
+                      <SelectItem value="balanced">
+                        Gebalanceerd (beperkte aannames waar nodig)
+                      </SelectItem>
+                      <SelectItem value="exploratory">
+                        Verkennend (maximale varianten en aannames)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-[var(--gray)]">
+                    De analyse blijft bron-gedreven; deze instelling bepaalt hoeveel ruimte er is
+                    voor aannames en scenario&apos;s.
+                  </p>
+                </div>
                 <Button
                   type="submit"
                   disabled={running}

@@ -6,14 +6,32 @@ import { analyses, projects } from "@/db/schema";
 import { parseAnalysisOutput } from "@/lib/analysis-output";
 import { requireDbUser } from "@/lib/auth-user";
 import { CLAUDE_MODEL, getAnthropicClient } from "@/lib/claude";
+import { gatherResearchSources } from "@/lib/web-research";
 import { z } from "zod";
 
 const postBodySchema = z.object({
   projectId: z.string().uuid(),
   modelId: z.string().min(1),
   inputData: z.record(z.string(), z.unknown()),
+  factualityLevel: z.enum(["strict", "balanced", "exploratory"]).optional().default("balanced"),
   stream: z.boolean().optional().default(false),
 });
+
+type SourceForPrompt = {
+  title: string;
+  url: string;
+  sourceType: "user_input" | "web_specific" | "web_sector";
+  excerpt: string;
+};
+
+const FACTUALITY_INSTRUCTION: Record<"strict" | "balanced" | "exploratory", string> = {
+  strict:
+    "Werk strikt feitelijk: geen speculatie, geen scenario's zonder expliciet bewijs. Bij ontbrekende data: benoem dat als datapunt-gat.",
+  balanced:
+    "Werk primair feitelijk, maar sta beperkte aannames toe als ze expliciet worden gelabeld en direct aan bronnen of input worden gekoppeld.",
+  exploratory:
+    "Werk feitelijk waar mogelijk, maar voeg bewust meerdere varianten/scenario's toe met expliciete aannames en onzekerheidslabels.",
+};
 
 function buildUserContent(
   organizationName: string,
@@ -21,14 +39,27 @@ function buildUserContent(
   size: string,
   description: string,
   inputData: Record<string, unknown>,
+  factualityLevel: "strict" | "balanced" | "exploratory",
+  sources: SourceForPrompt[],
 ): string {
+  const sourceBlock = JSON.stringify(sources, null, 2);
   return `Organization: ${organizationName}
 Sector: ${sector}
 Size: ${size}
 Challenge: ${description}
+Factuality level: ${factualityLevel}
 
 Input data:
-${JSON.stringify(inputData, null, 2)}`;
+${JSON.stringify(inputData, null, 2)}
+
+Verified sources:
+${sourceBlock}
+
+Instructies:
+- Gebruik de gebruikersinput als primaire bron en noem die in "sources" met sourceType "user_input" wanneer gebruikt.
+- Verwerk webbronnen alleen als "web_specific" of "web_sector" met correcte URL.
+- Elke belangrijke conclusie moet terug te leiden zijn naar minstens 1 bron.
+- Als informatie ontbreekt: markeer dat expliciet in assumptionsUsed (behalve bij strict waar je assumptionsUsed leeg laat tenzij user-assumpties expliciet zijn meegegeven).`;
 }
 
 async function assertProjectAccess(
@@ -60,6 +91,27 @@ export async function POST(req: Request) {
     const project = await assertProjectAccess(body.projectId, user.id);
     const db = getDb();
     const now = new Date();
+    const userSources: SourceForPrompt[] = Object.entries(body.inputData).reduce<
+      SourceForPrompt[]
+    >((acc, [key, value]) => {
+      const textValue = typeof value === "string" ? value.trim() : "";
+      if (!textValue) return acc;
+      acc.push({
+        title: `Gebruikersinput: ${key}`,
+        url: "user://input",
+        sourceType: "user_input",
+        excerpt: textValue.length > 320 ? `${textValue.slice(0, 320)}…` : textValue,
+      });
+      return acc;
+    }, []);
+
+    const webSources = await gatherResearchSources({
+      organizationName: project.organizationName,
+      sector: project.sector,
+      challenge: project.description,
+      modelName: model.name,
+    });
+    const allSources: SourceForPrompt[] = [...userSources, ...webSources];
 
     const [pending] = await db
       .insert(analyses)
@@ -87,7 +139,19 @@ export async function POST(req: Request) {
       project.size,
       project.description,
       body.inputData,
+      body.factualityLevel,
+      allSources,
     );
+    const systemPrompt = `${model.systemPrompt}
+
+Feitelijkheidskader:
+${FACTUALITY_INSTRUCTION[body.factualityLevel]}
+
+Verplicht:
+- Zet factualityLevel exact op "${body.factualityLevel}".
+- Neem alle gebruikte bronnen op in "sources" met herkomstlabel.
+- Benoem expliciet aannames in assumptionsUsed.
+- Voeg in scenarioVariants alleen varianten toe die passen bij factualityLevel.`;
 
     if (body.stream) {
       const client = getAnthropicClient();
@@ -101,7 +165,7 @@ export async function POST(req: Request) {
             const anthropicStream = await client.messages.stream({
               model: CLAUDE_MODEL,
               max_tokens: 4000,
-              system: model.systemPrompt,
+              system: systemPrompt,
               messages: [
                 {
                   role: "user",
@@ -181,7 +245,7 @@ export async function POST(req: Request) {
     const response = await client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 4000,
-      system: model.systemPrompt,
+      system: systemPrompt,
       messages: [
         {
           role: "user",

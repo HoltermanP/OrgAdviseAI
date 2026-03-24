@@ -23,6 +23,26 @@ export const analysisOutputSchema = z.object({
       actions: z.array(z.string()),
     }),
   ),
+  factualityLevel: z.enum(["strict", "balanced", "exploratory"]).default("balanced"),
+  assumptionsUsed: z.array(z.string()).default([]),
+  scenarioVariants: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+      }),
+    )
+    .default([]),
+  sources: z
+    .array(
+      z.object({
+        title: z.string(),
+        url: z.string(),
+        sourceType: z.enum(["user_input", "web_specific", "web_sector"]),
+        excerpt: z.string().default(""),
+      }),
+    )
+    .default([]),
 });
 
 export type AnalysisOutput = z.infer<typeof analysisOutputSchema>;

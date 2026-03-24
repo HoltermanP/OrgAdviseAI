@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileSidebar, Sidebar } from "@/components/layout/sidebar";
 
 const publicPrefixes = ["/", "/sign-in", "/sign-up"];
 
@@ -23,7 +23,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[var(--gray-light)]">
       <Sidebar />
-      <div className="flex min-h-screen flex-1 flex-col">{children}</div>
+      <div className="flex min-h-screen flex-1 flex-col">
+        <MobileSidebar />
+        {children}
+      </div>
     </div>
   );
 }

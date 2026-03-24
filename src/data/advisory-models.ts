@@ -34,7 +34,11 @@ Alle tekstvelden bevatten semantische HTML-fragmenten (geen volledig document): 
   "keyFindings": ["string (HTML per punt)"],
   "recommendations": [{ "title": "string (HTML)", "description": "string (HTML)" }],
   "riskFlags": [{ "title": "string (platte tekst of korte HTML)", "severity": "low" | "medium" | "high", "detail": "string (HTML)" }],
-  "implementationSteps": [{ "phase": "string (HTML)", "actions": ["string (HTML)"] }]
+  "implementationSteps": [{ "phase": "string (HTML)", "actions": ["string (HTML)"] }],
+  "factualityLevel": "strict | balanced | exploratory",
+  "assumptionsUsed": ["string (HTML per aanname, leeg bij strict)"],
+  "scenarioVariants": [{ "name": "string (HTML)", "description": "string (HTML)" }],
+  "sources": [{ "title": "string", "url": "string", "sourceType": "user_input | web_specific | web_sector", "excerpt": "string (kort citaat/samenvatting)" }]
 }`;
 
 const BASE_FIELDS: ModelInputSchema = {
@@ -57,8 +61,43 @@ const BASE_FIELDS: ModelInputSchema = {
       description: "KPI's, enquêtes, klantfeedback, operationele cijfers die relevant zijn.",
       format: "textarea",
     },
+    objectives: {
+      type: "string",
+      title: "Doel van de analyse",
+      description: "Welke beslissingen moeten met deze analyse genomen worden?",
+      format: "textarea",
+    },
+    constraints: {
+      type: "string",
+      title: "Randvoorwaarden",
+      description: "Budget, capaciteit, tijd, compliance, governance of andere beperkingen.",
+      format: "textarea",
+    },
+    knownRisks: {
+      type: "string",
+      title: "Bekende risico's",
+      description: "Risico's of blokkades die nu al bekend zijn.",
+      format: "textarea",
+    },
+    initiativesInFlight: {
+      type: "string",
+      title: "Lopende initiatieven",
+      description: "Programma's of projecten die met dit onderwerp samenhangen.",
+      format: "textarea",
+    },
+    assumptionsByUser: {
+      type: "string",
+      title: "Eigen aannames of hypotheses",
+      description: "Welke aannames wil je expliciet laten toetsen?",
+      format: "textarea",
+    },
+    desiredTimeHorizon: {
+      type: "string",
+      title: "Gewenste tijdshorizon",
+      description: "Bijv. 0-3 maanden, 3-12 maanden, >12 maanden.",
+    },
   },
-  required: ["strategicContext", "dataSignals"],
+  required: [],
 };
 
 function schemaVariant(
@@ -232,7 +271,7 @@ function buildModels(): AdvisoryModel[] {
         description: `${bp.name} helpt bij ${bp.focus.toLowerCase()} binnen ${cat.label.toLowerCase()}.`,
         whenToUse: `Gebruik dit model wanneer je ${bp.focus.toLowerCase()} wilt onderzoeken en vertalen naar concrete adviezen.`,
         systemPrompt: buildPrompt(cat.label, bp.name, bp.focus),
-        inputSchema: schemaVariant(extra, ["specificQuestion"]),
+        inputSchema: schemaVariant(extra, []),
       });
     }
   }

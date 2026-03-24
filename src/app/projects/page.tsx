@@ -192,7 +192,7 @@ export default function ProjectsPage() {
           </Dialog>
         }
       />
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
         {loading ? (
           <div className="flex justify-center py-16 text-[var(--gray)]">
             <Loader2 className="h-8 w-8 animate-spin" />

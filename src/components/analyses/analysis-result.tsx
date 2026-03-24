@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, ListOrdered, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ListOrdered, Sparkles, Link2 } from "lucide-react";
 
 type AnalysisResultProps = {
   data: AnalysisOutput;
@@ -23,6 +23,13 @@ const compactHtmlClass =
   "[&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2";
 
 export function AnalysisResult({ data }: AnalysisResultProps) {
+  const factualityText =
+    data.factualityLevel === "strict"
+      ? "Feitelijk"
+      : data.factualityLevel === "exploratory"
+        ? "Verkennend"
+        : "Gebalanceerd";
+
   return (
     <div className="space-y-6">
       <Card className="border-[var(--blue)]/30 bg-[var(--blue-light)]">
@@ -36,6 +43,13 @@ export function AnalysisResult({ data }: AnalysisResultProps) {
         <CardContent className="text-[var(--gray-dark)]">
           <SafeHtml html={data.summary} className={compactHtmlClass} />
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-[var(--navy)]">Analyse-instelling</CardTitle>
+          <CardDescription>Feitelijkheidsgraad: {factualityText}</CardDescription>
+        </CardHeader>
       </Card>
 
       <Card>
@@ -108,6 +122,73 @@ export function AnalysisResult({ data }: AnalysisResultProps) {
           ))}
         </div>
       </div>
+
+      {data.assumptionsUsed.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-lg font-semibold text-[var(--navy)]">Aannames</h3>
+          <ul className="list-disc space-y-2 pl-5 text-sm text-[var(--gray-dark)]">
+            {data.assumptionsUsed.map((assumption, i) => (
+              <li key={i}>
+                <SafeHtml html={assumption} className={compactHtmlClass} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {data.scenarioVariants.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-lg font-semibold text-[var(--navy)]">Scenario&apos;s en varianten</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            {data.scenarioVariants.map((variant, i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-[var(--navy)]">
+                    <SafeHtml html={variant.name} className={compactHtmlClass} />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-[var(--gray-dark)]">
+                  <SafeHtml html={variant.description} className={compactHtmlClass} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.sources.length > 0 && (
+        <div>
+          <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-[var(--navy)]">
+            <Link2 className="h-5 w-5 text-[var(--blue)]" />
+            Bronnen
+          </h3>
+          <div className="space-y-3">
+            {data.sources.map((source, i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base text-[var(--navy)]">{source.title}</CardTitle>
+                  <CardDescription>{source.sourceType}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-[var(--gray-dark)]">
+                  {source.url === "user://input" ? (
+                    <p>Afkomstig uit gebruikersinput</p>
+                  ) : (
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--blue)] underline underline-offset-2"
+                    >
+                      {source.url}
+                    </a>
+                  )}
+                  {source.excerpt ? <p>{source.excerpt}</p> : null}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <h3 className="mb-3 text-lg font-semibold text-[var(--navy)]">

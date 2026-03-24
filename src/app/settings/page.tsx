@@ -17,7 +17,7 @@ export default function SettingsPage() {
           { label: "Instellingen" },
         ]}
       />
-      <div className="flex-1 space-y-6 p-6">
+      <div className="flex-1 space-y-6 p-4 sm:p-6">
         <BrandStylesManager />
         <Card>
           <CardHeader>

@@ -33,7 +33,7 @@ export default function ModelsPage() {
           { label: "Modellen" },
         ]}
       />
-      <div className="flex flex-1 gap-6 p-6">
+      <div className="flex flex-1 gap-6 p-4 sm:p-6">
         <aside className="hidden w-52 shrink-0 flex-col gap-2 lg:flex">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray)]">
             Categorie

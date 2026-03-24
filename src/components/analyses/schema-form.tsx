@@ -22,6 +22,10 @@ export function SchemaForm({
 
   return (
     <div className="grid gap-4">
+      <p className="text-xs text-[var(--gray)]">
+        Alle velden zijn optioneel. Hoe meer context, hoe specifieker en beter onderbouwd de
+        analyse wordt.
+      </p>
       {keys.map((key) => {
         const prop = schema.properties[key];
         const id = `field-${key}`;

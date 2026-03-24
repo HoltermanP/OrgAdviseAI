@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { LayoutDashboard, Boxes, Settings, Sparkles } from "lucide-react";
+import { Boxes, LayoutDashboard, Menu, Settings, Sparkles } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -17,7 +26,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-[var(--gray-light)] bg-[var(--navy)] text-white">
+    <aside className="hidden h-full w-56 flex-col border-r border-[var(--gray-light)] bg-[var(--navy)] text-white md:flex">
       <div className="border-b border-white/10 px-4 py-5">
         <Link href="/dashboard" className="font-semibold tracking-tight">
           OrgAdvisor AI
@@ -52,5 +61,60 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+export function MobileSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <div className="sticky top-0 z-40 border-b border-[var(--gray-light)] bg-white px-4 py-3 md:hidden">
+      <div className="flex items-center justify-between gap-3">
+        <Sheet>
+          <SheetTrigger
+            render={
+              <Button variant="outline" size="icon-sm" aria-label="Open navigatie" />
+            }
+          >
+            <Menu className="h-4 w-4" />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[85%] max-w-xs bg-[var(--navy)] p-0 text-white">
+            <SheetHeader className="border-b border-white/10 px-4 py-5 text-left">
+              <SheetTitle className="text-white">OrgAdvisor AI</SheetTitle>
+              <SheetDescription className="text-blue-200">AI-Group</SheetDescription>
+            </SheetHeader>
+            <nav className="flex flex-1 flex-col gap-1 p-3">
+              {links.map(({ href, label, icon: Icon }) => {
+                const active =
+                  pathname === href ||
+                  (href !== "/dashboard" && pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-[var(--blue)] text-white"
+                        : "text-blue-100 hover:bg-white/10",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </SheetContent>
+        </Sheet>
+        <Link
+          href="/dashboard"
+          className="truncate text-sm font-semibold tracking-tight text-[var(--navy)]"
+        >
+          OrgAdvisor AI
+        </Link>
+        <UserButton />
+      </div>
+    </div>
   );
 }

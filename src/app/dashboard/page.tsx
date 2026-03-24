@@ -77,7 +77,7 @@ export default async function DashboardPage() {
           </Button>
         }
       />
-      <div className="flex-1 space-y-8 p-6">
+      <div className="flex-1 space-y-8 p-4 sm:p-6">
         {empty ? (
           <Card className="border-dashed border-[var(--blue)]/40 bg-[var(--blue-light)]/40">
             <CardHeader>

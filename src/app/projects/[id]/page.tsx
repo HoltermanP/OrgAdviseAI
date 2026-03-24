@@ -171,7 +171,7 @@ export default function ProjectDetailPage() {
           </div>
         }
       />
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-white">
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
