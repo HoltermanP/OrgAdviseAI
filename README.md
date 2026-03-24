@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OrgAdvisor AI
 
-## Getting Started
+Next.js-app voor organisatieadvies: 100 adviesmodellen, analyses via Claude Opus (`claude-opus-4-5`), rapporten met streaming en PDF-export, en project-chat met volledige analyse-context.
 
-First, run the development server:
+## Vereisten
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 20+
+- PostgreSQL-database
+- [Clerk](https://clerk.com)-account
+- [Anthropic](https://console.anthropic.com)-API-sleutel
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Lokale setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Kopieer omgevingsvariabelen:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   cp .env.example .env.local
+   ```
 
-## Learn More
+   Vul `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DATABASE_URL` en `ANTHROPIC_API_KEY`.
 
-To learn more about Next.js, take a look at the following resources:
+2. Installeer dependencies:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Genereer en push het databaseschema (Drizzle):
 
-## Deploy on Vercel
+   ```bash
+   npm run db:generate
+   npm run db:push
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   `db:push` past het schema direct toe op de database uit `DATABASE_URL` (geschikt voor development en Vercel/Neon).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. Start de ontwikkelserver:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000), meld je aan; bij de eerste login wordt je Clerk-gebruiker gesynchroniseerd via `POST /api/users/sync`.
+
+## Scripts
+
+| Script        | Beschrijving              |
+| ------------- | ------------------------- |
+| `npm run dev` | Ontwikkelserver           |
+| `npm run build` | Productiebuild        |
+| `npm run start` | Productieserver         |
+| `npm run lint`  | ESLint                  |
+| `npm run db:generate` | Drizzle migrations genereren |
+| `npm run db:push`     | Schema naar DB pushen   |
+
+## Deploy op Vercel
+
+1. Koppel de GitHub-repo (of deploy via CLI).
+2. Zet dezelfde omgevingsvariabelen in Vercel Project Settings.
+3. Zorg dat `DATABASE_URL` naar je productie-Postgres wijst en voer één keer `npm run db:push` uit (lokaal tegen productie-URL of via CI), of gebruik je eigen migratieproces.
+
+## Structuur (hoog niveau)
+
+- `src/app/api/*` — REST API (projecten, analyses, rapporten, chat, user sync).
+- `src/db/schema.ts` — Drizzle-schema (`users`, `projects`, `analyses`, `reports`).
+- `src/data/advisory-models.ts` — 100 modellen in 10 categorieën.
+- `src/components` — Layout, modellenkaarten, analyse-resultaat, rapportviewer (inclusief PDF), chat.
+
+## Merk
+
+OrgAdvisor AI / AI-Group — zie footers in PDF-export en landingspagina.
