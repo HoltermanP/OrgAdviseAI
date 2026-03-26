@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { ActionPlanPanel } from "@/components/action-plan/action-plan-panel";
 import {
   Select,
   SelectContent,
@@ -22,16 +23,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, FileText } from "lucide-react";
+import { Loader2, Plus, FileText, ListTodo } from "lucide-react";
 import { toast } from "sonner";
 
 type Project = {
   id: string;
   name: string;
+  organizationId: string | null;
   organizationName: string;
   sector: string;
   size: string;
   description: string;
+  projectGoals: string;
   status: string;
   brandStyleId: string | null;
 };
@@ -71,15 +74,17 @@ export default function ProjectDetailPage() {
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [brandStyles, setBrandStyles] = useState<BrandStyleRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openActionsCount, setOpenActionsCount] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [pr, ar, rr, br] = await Promise.all([
+      const [pr, ar, rr, br, apr] = await Promise.all([
         fetch(`/api/projects/${id}`),
         fetch(`/api/projects/${id}/analyses`),
         fetch(`/api/projects/${id}/reports`),
         fetch("/api/brand-styles"),
+        fetch(`/api/projects/${id}/action-items`),
       ]);
       const pj = (await pr.json()) as {
         project?: Project;
@@ -92,15 +97,29 @@ export default function ProjectDetailPage() {
         brandStyles?: BrandStyleRow[];
         error?: string;
       };
+      const apj = (await apr.json()) as {
+        items?: { status: string }[];
+        error?: string;
+      };
       if (!pr.ok) throw new Error(pj.error ?? "Project laden mislukt");
       if (!ar.ok) throw new Error(aj.error ?? "Analyses laden mislukt");
       if (!rr.ok) throw new Error(rj.error ?? "Rapporten laden mislukt");
       if (!br.ok) throw new Error(bj.error ?? "Huisstijlen laden mislukt");
+      if (!apr.ok) throw new Error(apj.error ?? "Actieplan laden mislukt");
       setProject(pj.project ?? null);
       setAnalysesCount(pj.analysesCount ?? 0);
       setAnalyses(aj.analyses ?? []);
       setReports(rj.reports ?? []);
       setBrandStyles(bj.brandStyles ?? []);
+      const actionItems = apj.items ?? [];
+      setOpenActionsCount(
+        actionItems.filter(
+          (it) =>
+            it.status === "proposed" ||
+            it.status === "todo" ||
+            it.status === "in_progress",
+        ).length,
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Fout");
     } finally {
@@ -168,6 +187,12 @@ export default function ProjectDetailPage() {
                 Rapport
               </Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href={`/projects/${id}/action-plan`}>
+                <ListTodo className="mr-2 h-4 w-4" />
+                Actieplan
+              </Link>
+            </Button>
           </div>
         }
       />
@@ -177,6 +202,7 @@ export default function ProjectDetailPage() {
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
             <TabsTrigger value="analyses">Analyses</TabsTrigger>
             <TabsTrigger value="reports">Rapporten</TabsTrigger>
+            <TabsTrigger value="actions">Actieplan</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
 
@@ -235,6 +261,12 @@ export default function ProjectDetailPage() {
                     {project.status === "active" ? "Actief" : "Gearchiveerd"}
                   </p>
                   <p className="pt-2 text-[var(--gray-dark)]">{project.description}</p>
+                  {project.projectGoals ? (
+                    <div className="pt-2">
+                      <p className="text-[var(--gray)]">Projectdoelen:</p>
+                      <p className="text-[var(--gray-dark)]">{project.projectGoals}</p>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
               <Card>
@@ -242,7 +274,7 @@ export default function ProjectDetailPage() {
                   <CardTitle className="text-[var(--navy)]">Kerncijfers</CardTitle>
                   <CardDescription>Live uit dit project</CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4 text-center">
+                <CardContent className="grid grid-cols-2 gap-4 text-center sm:grid-cols-3">
                   <div className="rounded-lg bg-[var(--blue-light)] p-4">
                     <p className="text-2xl font-bold text-[var(--navy)]">
                       {analysesCount}
@@ -254,6 +286,12 @@ export default function ProjectDetailPage() {
                       {reports.length}
                     </p>
                     <p className="text-xs text-[var(--gray)]">Rapporten</p>
+                  </div>
+                  <div className="rounded-lg bg-[var(--blue-light)] p-4 sm:col-span-1 col-span-2">
+                    <p className="text-2xl font-bold text-[var(--navy)]">
+                      {openActionsCount}
+                    </p>
+                    <p className="text-xs text-[var(--gray)]">Open acties</p>
                   </div>
                 </CardContent>
               </Card>
@@ -329,6 +367,10 @@ export default function ProjectDetailPage() {
                 ))}
               </ul>
             )}
+          </TabsContent>
+
+          <TabsContent value="actions">
+            <ActionPlanPanel projectId={id} embed />
           </TabsContent>
 
           <TabsContent value="chat">

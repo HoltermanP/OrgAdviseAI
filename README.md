@@ -66,6 +66,12 @@ Next.js-app voor organisatieadvies: 100 adviesmodellen, analyses via Claude Opus
 - `src/data/advisory-models.ts` — 100 modellen in 10 categorieën.
 - `src/components` — Layout, modellenkaarten, analyse-resultaat, rapportviewer (inclusief PDF), chat.
 
-## Merk
+## Merk en huisstijl
 
-OrgAdvisor AI / AI-Group — zie footers in PDF-export en landingspagina.
+- Kernmerk: `AI-Group.nl`
+- Tagline: `AI-first - we ship fast.`
+- Standaard logo-endpoint: `/api/brand/logo`
+- Documenten (rapporten/PDF) gebruiken standaard dezelfde kleuren + footer via `DEFAULT_PDF_THEME`.
+- Presentaties (Gamma) krijgen dezelfde huisstijl via extra instructies in de Gamma-generator.
+
+Zie ook `docs/huisstijl.md` voor richtlijnen.

@@ -131,3 +131,50 @@ export async function gatherResearchSources(input: {
   }
   return Array.from(deduped.values()).slice(0, 8);
 }
+
+/**
+ * Haalt tekstfragmenten op voor door de gebruiker goedgekeurde organisatie-URL's
+ * (zelfde lees-proxy als andere webresearch).
+ */
+export async function sourcesFromApprovedUrls(urls: string[]): Promise<ResearchSource[]> {
+  const normalized = [
+    ...new Set(urls.map((u) => normalizeUrl(u.trim())).filter((u) => u.length > 0)),
+  ].slice(0, 12);
+
+  const enriched = await Promise.all(
+    normalized.map(async (url) => {
+      try {
+        const pageText = await fetchReadablePage(url);
+        const excerpt = pickExcerpt(pageText);
+        if (!excerpt) return null;
+        const host = new URL(url).hostname;
+        return {
+          title: `Goedgekeurde organisatiebron (${host})`,
+          url,
+          sourceType: "web_specific" as const,
+          excerpt,
+        } satisfies ResearchSource;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const filtered: ResearchSource[] = [];
+  for (const item of enriched) {
+    if (item) filtered.push(item);
+  }
+  return filtered;
+}
+
+export function mergeResearchSourcesByUrl(
+  ...batches: ResearchSource[][]
+): ResearchSource[] {
+  const map = new Map<string, ResearchSource>();
+  for (const batch of batches) {
+    for (const s of batch) {
+      if (!map.has(s.url)) map.set(s.url, s);
+    }
+  }
+  return Array.from(map.values());
+}

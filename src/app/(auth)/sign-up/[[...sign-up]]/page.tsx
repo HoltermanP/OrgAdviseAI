@@ -1,10 +1,11 @@
 import { SignUp } from "@clerk/nextjs";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export default function SignUpPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--gray-light)] px-4">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-[var(--navy)]">OrgAdvisor AI</h1>
+        <BrandLogo className="justify-center" />
         <p className="mt-1 text-sm text-[var(--gray)]">
           Maak een account aan om te starten
         </p>

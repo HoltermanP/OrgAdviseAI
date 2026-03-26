@@ -33,6 +33,8 @@ function buildReportSystemPrompt(
 ): string {
   return `Je bent een senior organisatieadviseur. Je schrijft een professioneel rapport voor ${organizationName}.
 Stijl: zakelijk Nederlands, helder, concreet. ${REPORT_TYPE_INSTRUCTION[reportType]}
+Huisstijl: AI-Group.nl. Schrijf met een moderne, adviesgerichte tone-of-voice.
+Neem direct onder de titel een subtiele merkregel op: "AI-Group.nl - AI-first - we ship fast.".
 
 Brondata (voltooide analyses als JSON):
 ${JSON.stringify(payload, null, 2)}

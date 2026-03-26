@@ -21,6 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,41 +35,64 @@ import { toast } from "sonner";
 type ProjectRow = {
   id: string;
   name: string;
+  organizationId: string | null;
   organizationName: string;
   sector: string;
+  projectGoals?: string;
   status: string;
   analysisCount: number;
 };
 
+type OrganizationRow = {
+  id: string;
+  name: string;
+  sector: string;
+  size: string;
+};
+
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
+  const [orgFilter, setOrgFilter] = useState("__all__");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    organizationName: "",
-    sector: "",
-    size: "",
+    organizationId: "",
     description: "",
+    projectGoals: "",
   });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/projects");
-      const data = (await res.json()) as {
+      const projectsUrl =
+        orgFilter === "__all__"
+          ? "/api/projects"
+          : `/api/projects?organizationId=${encodeURIComponent(orgFilter)}`;
+      const [pr, or] = await Promise.all([
+        fetch(projectsUrl),
+        fetch("/api/organizations"),
+      ]);
+      const data = (await pr.json()) as {
         projects?: ProjectRow[];
         error?: string;
       };
-      if (!res.ok) throw new Error(data.error ?? "Laden mislukt");
+      const orgData = (await or.json()) as {
+        organizations?: OrganizationRow[];
+        error?: string;
+      };
+      if (!pr.ok) throw new Error(data.error ?? "Projecten laden mislukt");
+      if (!or.ok) throw new Error(orgData.error ?? "Organisaties laden mislukt");
       setProjects(data.projects ?? []);
+      setOrganizations(orgData.organizations ?? []);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Fout bij laden");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [orgFilter]);
 
   useEffect(() => {
     void load();
@@ -83,10 +113,9 @@ export default function ProjectsPage() {
       setOpen(false);
       setForm({
         name: "",
-        organizationName: "",
-        sector: "",
-        size: "",
+        organizationId: "",
         description: "",
+        projectGoals: "",
       });
       await load();
       if (data.project?.id) {
@@ -109,6 +138,7 @@ export default function ProjectsPage() {
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger
+              disabled={organizations.length === 0}
               className={buttonVariants({
                 className: "bg-[var(--blue)] text-white hover:bg-[var(--blue)]/90",
               })}
@@ -132,39 +162,45 @@ export default function ProjectsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org">Organisatie *</Label>
-                    <Input
-                      id="org"
-                      required
-                      value={form.organizationName}
+                    <Label>Organisatie *</Label>
+                    <Select
+                      value={form.organizationId}
+                      onValueChange={(v) =>
+                        setForm((f) => ({ ...f, organizationId: v ?? "" }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Kies organisatie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-[var(--gray)]">
+                      Nog geen organisatie?{" "}
+                      <Link href="/organizations" className="text-[var(--blue)] underline">
+                        Maak er eerst een aan
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="goals">Projectdoelen</Label>
+                    <Textarea
+                      id="goals"
+                      rows={3}
+                      value={form.projectGoals}
                       onChange={(e) =>
-                        setForm((f) => ({ ...f, organizationName: e.target.value }))
+                        setForm((f) => ({ ...f, projectGoals: e.target.value }))
                       }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sector">Sector *</Label>
-                    <Input
-                      id="sector"
-                      required
-                      value={form.sector}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, sector: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="size">Grootte *</Label>
-                    <Input
-                      id="size"
-                      required
-                      placeholder="bijv. 50-250 FTE"
-                      value={form.size}
-                      onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="desc">Uitdaging / context</Label>
+                    <Label htmlFor="desc">Context / toelichting</Label>
                     <Textarea
                       id="desc"
                       rows={3}
@@ -176,7 +212,11 @@ export default function ProjectsPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={saving} className="bg-[var(--navy)]">
+                  <Button
+                    type="submit"
+                    disabled={saving || !form.organizationId}
+                    className="bg-[var(--navy)]"
+                  >
                     {saving ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -192,7 +232,46 @@ export default function ProjectsPage() {
           </Dialog>
         }
       />
-      <div className="flex-1 p-4 sm:p-6">
+      <div className="flex-1 space-y-4 p-4 sm:p-6">
+        {organizations.length > 0 ? (
+          <div className="flex max-w-md flex-col gap-2">
+            <Label>Filter op organisatie</Label>
+            <Select
+              value={orgFilter}
+              onValueChange={(v) => setOrgFilter(v ?? "__all__")}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Alle projecten</SelectItem>
+                <SelectItem value="__none__">Zonder organisatie</SelectItem>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>
+                    {org.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
+        {organizations.length === 0 ? (
+          <Card className="mb-4 border-dashed border-[var(--blue)]/40">
+            <CardHeader>
+              <CardTitle className="text-[var(--navy)]">Eerst een organisatie aanmaken</CardTitle>
+              <CardDescription>
+                Projecten hangen onder een organisatie. Maak eerst een organisatie met
+                bedrijfsinformatie en goedgekeurde websites.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/organizations">Naar organisaties</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
         {loading ? (
           <div className="flex justify-center py-16 text-[var(--gray)]">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -200,12 +279,21 @@ export default function ProjectsPage() {
         ) : projects.length === 0 ? (
           <Card className="border-dashed">
             <CardHeader>
-              <CardTitle className="text-[var(--navy)]">Geen projecten</CardTitle>
+              <CardTitle className="text-[var(--navy)]">
+                {orgFilter === "__all__" ? "Geen projecten" : "Geen projecten voor dit filter"}
+              </CardTitle>
               <CardDescription>
-                Maak je eerste project aan om analyses te starten.
+                {orgFilter === "__all__"
+                  ? "Maak je eerste project aan om analyses te starten."
+                  : "Kies een ander filter of maak een nieuw project onder deze organisatie."}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-wrap gap-2">
+              {orgFilter !== "__all__" ? (
+                <Button variant="outline" onClick={() => setOrgFilter("__all__")}>
+                  Alle projecten tonen
+                </Button>
+              ) : null}
               <Button onClick={() => setOpen(true)}>Nieuw project</Button>
             </CardContent>
           </Card>
@@ -231,6 +319,9 @@ export default function ProjectsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="mt-auto flex flex-col gap-3">
+                  {p.projectGoals ? (
+                    <p className="line-clamp-3 text-sm text-[var(--gray)]">{p.projectGoals}</p>
+                  ) : null}
                   <p className="text-sm text-[var(--gray)]">
                     {p.analysisCount} {p.analysisCount === 1 ? "analyse" : "analyses"}
                   </p>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { analyses, brandStyles, projects } from "@/db/schema";
+import { analyses, brandStyles, organizations, projects } from "@/db/schema";
 import { requireDbUser } from "@/lib/auth-user";
 import { z } from "zod";
 
@@ -11,6 +11,7 @@ const updateBodySchema = z.object({
   sector: z.string().min(1).optional(),
   size: z.string().min(1).optional(),
   description: z.string().optional(),
+  projectGoals: z.string().optional(),
   status: z.enum(["active", "archived"]).optional(),
   brandStyleId: z.union([z.string().uuid(), z.null()]).optional(),
 });
@@ -36,9 +37,11 @@ export async function GET(_req: Request, context: RouteContext) {
       .select({
         project: projects,
         brandStyle: brandStyles,
+        organization: organizations,
       })
       .from(projects)
       .leftJoin(brandStyles, eq(projects.brandStyleId, brandStyles.id))
+      .leftJoin(organizations, eq(projects.organizationId, organizations.id))
       .where(and(eq(projects.id, id), eq(projects.userId, user.id)))
       .limit(1);
     const found = row[0];
@@ -51,7 +54,12 @@ export async function GET(_req: Request, context: RouteContext) {
       .where(eq(analyses.projectId, id));
 
     return NextResponse.json({
-      project: found.project,
+      project: {
+        ...found.project,
+        organizationName: found.organization?.name ?? found.project.organizationName,
+        sector: found.organization?.sector || found.project.sector,
+        size: found.organization?.size || found.project.size,
+      },
       brandStyle: found.brandStyle,
       analysesCount: countRow?.c ?? 0,
     });

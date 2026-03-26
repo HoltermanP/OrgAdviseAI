@@ -21,11 +21,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--gray-light)]">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <Sidebar />
       <div className="flex min-h-screen flex-1 flex-col">
         <MobileSidebar />
-        {children}
+        <main className="flex min-h-0 flex-1 flex-col">{children}</main>
       </div>
     </div>
   );

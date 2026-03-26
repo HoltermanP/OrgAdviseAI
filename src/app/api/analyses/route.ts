@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { ADVISORY_MODEL_BY_ID } from "@/data/advisory-models";
 import { getDb } from "@/db";
-import { analyses, projects } from "@/db/schema";
+import { analyses, organizations, projects } from "@/db/schema";
+import { insertProposedActionItemsFromAnalysis } from "@/lib/action-plan-from-analysis";
 import { parseAnalysisOutput } from "@/lib/analysis-output";
 import { requireDbUser } from "@/lib/auth-user";
 import { CLAUDE_MODEL, getAnthropicClient } from "@/lib/claude";
-import { gatherResearchSources } from "@/lib/web-research";
+import {
+  gatherResearchSources,
+  mergeResearchSourcesByUrl,
+  sourcesFromApprovedUrls,
+} from "@/lib/web-research";
 import { z } from "zod";
 
 const postBodySchema = z.object({
@@ -105,13 +110,35 @@ export async function POST(req: Request) {
       return acc;
     }, []);
 
+    let approvedWebResearch: Awaited<ReturnType<typeof sourcesFromApprovedUrls>> =
+      [];
+    if (project.organizationId) {
+      const orgRows = await db
+        .select({
+          approvedSourceUrls: organizations.approvedSourceUrls,
+        })
+        .from(organizations)
+        .where(
+          and(
+            eq(organizations.id, project.organizationId),
+            eq(organizations.userId, user.id),
+          ),
+        )
+        .limit(1);
+      const urls = orgRows[0]?.approvedSourceUrls ?? [];
+      if (urls.length > 0) {
+        approvedWebResearch = await sourcesFromApprovedUrls(urls);
+      }
+    }
+
     const webSources = await gatherResearchSources({
       organizationName: project.organizationName,
       sector: project.sector,
       challenge: project.description,
       modelName: model.name,
     });
-    const allSources: SourceForPrompt[] = [...userSources, ...webSources];
+    const mergedWeb = mergeResearchSourcesByUrl(approvedWebResearch, webSources);
+    const allSources: SourceForPrompt[] = [...userSources, ...mergedWeb];
 
     const [pending] = await db
       .insert(analyses)
@@ -201,6 +228,19 @@ Verplicht:
               })
               .where(eq(analyses.id, analysisId));
 
+            try {
+              await insertProposedActionItemsFromAnalysis(db, {
+                projectId: body.projectId,
+                analysisId,
+                output: parsed,
+              });
+            } catch (actionErr) {
+              console.error(
+                "Actieplan-voorstellen opslaan mislukt:",
+                actionErr,
+              );
+            }
+
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({
@@ -268,6 +308,16 @@ Verplicht:
       })
       .where(eq(analyses.id, pending.id))
       .returning();
+
+    try {
+      await insertProposedActionItemsFromAnalysis(db, {
+        projectId: body.projectId,
+        analysisId: pending.id,
+        output: parsed,
+      });
+    } catch (actionErr) {
+      console.error("Actieplan-voorstellen opslaan mislukt:", actionErr);
+    }
 
     return NextResponse.json({ analysis: updated });
   } catch (e) {

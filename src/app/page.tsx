@@ -2,13 +2,15 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
 import { Sparkles, LineChart, FileText, Shield } from "lucide-react";
+import { BrandLogo } from "@/components/brand/brand-logo";
+import { BRAND } from "@/lib/brand";
 
 export default async function HomePage() {
   const { userId } = await auth();
   return (
     <div className="min-h-screen bg-[var(--navy)] text-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <span className="text-lg font-semibold">OrgAdvisor AI</span>
+        <BrandLogo href="/" dark />
         <div className="flex gap-2">
           {userId ? (
             <Button asChild variant="secondary">
@@ -29,7 +31,7 @@ export default async function HomePage() {
       <main className="mx-auto max-w-6xl px-6 pb-24 pt-16">
         <div className="max-w-3xl">
           <p className="text-sm font-medium uppercase tracking-widest text-blue-300">
-            AI-Group · Organisatieadvies
+            {BRAND.websiteName} · Organisatieadvies
           </p>
           <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
             Van diagnose tot rapport — met 100 bewezen adviesmodellen

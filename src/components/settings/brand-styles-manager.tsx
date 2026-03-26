@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BRAND } from "@/lib/brand";
 
 type BrandStyleRow = {
   id: string;
@@ -26,18 +27,27 @@ type BrandStyleRow = {
 
 const emptyForm = {
   name: "",
-  accentColor: "#185FA5",
-  secondaryColor: "#0F172A",
-  mutedColor: "#64748B",
-  logoUrl: "",
+  accentColor: BRAND.colors.blue,
+  secondaryColor: BRAND.colors.navy,
+  mutedColor: BRAND.colors.mutedBlue,
+  logoUrl: BRAND.logoUrl,
   footerText: "",
+};
+
+type BrandStyleForm = {
+  name: string;
+  accentColor: string;
+  secondaryColor: string;
+  mutedColor: string;
+  logoUrl: string;
+  footerText: string;
 };
 
 export function BrandStylesManager() {
   const [list, setList] = useState<BrandStyleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<BrandStyleForm>(emptyForm);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -181,7 +191,7 @@ export function BrandStylesManager() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, footerText: e.target.value }))
                 }
-                placeholder="Leeg laten voor standaard OrgAdvisor-voet"
+                placeholder="Leeg laten voor standaard AI-Group-voet"
               />
             </div>
           </div>

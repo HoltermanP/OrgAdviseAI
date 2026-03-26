@@ -1,4 +1,5 @@
 import type { BrandStyle } from "@/db/schema";
+import { BRAND } from "@/lib/brand";
 
 export type PdfBrandTheme = {
   accentColor: string;
@@ -9,11 +10,11 @@ export type PdfBrandTheme = {
 };
 
 export const DEFAULT_PDF_THEME: PdfBrandTheme = {
-  accentColor: "#185FA5",
-  secondaryColor: "#0F172A",
-  mutedColor: "#64748B",
-  footerText: "OrgAdvisor AI · AI-Group — Vertrouwelijk adviesdocument",
-  logoUrl: null,
+  accentColor: BRAND.colors.blue,
+  secondaryColor: BRAND.colors.navy,
+  mutedColor: BRAND.colors.mutedBlue,
+  footerText: "AI-Group.nl · AI-first - we ship fast. · Vertrouwelijk adviesdocument",
+  logoUrl: BRAND.logoUrl,
 };
 
 export function pdfThemeFromBrandStyle(row: BrandStyle | null | undefined): PdfBrandTheme {

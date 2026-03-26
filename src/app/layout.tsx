@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import { SyncUser } from "@/components/auth/sync-user";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OrgAdvisor AI",
-  description: "Organisatieadvies met AI — modellen, analyses en rapporten.",
+  title: `${BRAND.appName} | ${BRAND.websiteName}`,
+  description: "AI-Group.nl organisatieadvies met AI — modellen, analyses en rapporten.",
 };
 
 export default function RootLayout({

@@ -132,6 +132,8 @@ export function ReportPdfDocument({
       <Page size="A4" style={baseLayout.page}>
         <View>
           {theme.logoUrl ? (
+            // react-pdf Image is not an HTML img element; alt is unsupported here.
+            // eslint-disable-next-line jsx-a11y/alt-text
             <Image src={theme.logoUrl} style={baseLayout.logo} />
           ) : null}
           <Text style={[baseLayout.coverTitle, { color: theme.secondaryColor }]}>

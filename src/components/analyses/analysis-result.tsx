@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { AnalysisOutput } from "@/lib/analysis-output";
 import { SafeHtml } from "@/components/safe-html";
 import {
@@ -11,6 +12,8 @@ import { AlertTriangle, CheckCircle2, ListOrdered, Sparkles, Link2 } from "lucid
 
 type AnalysisResultProps = {
   data: AnalysisOutput;
+  /** Voor link naar actieplan (voorstellen uit aanbevelingen) */
+  projectId?: string;
 };
 
 const severityStyles = {
@@ -22,7 +25,7 @@ const severityStyles = {
 const compactHtmlClass =
   "[&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:my-2 [&_ol]:my-2";
 
-export function AnalysisResult({ data }: AnalysisResultProps) {
+export function AnalysisResult({ data, projectId }: AnalysisResultProps) {
   const factualityText =
     data.factualityLevel === "strict"
       ? "Feitelijk"
@@ -85,6 +88,19 @@ export function AnalysisResult({ data }: AnalysisResultProps) {
           <CheckCircle2 className="h-5 w-5 text-[var(--blue)]" />
           Aanbevelingen
         </h3>
+        {projectId ? (
+          <p className="mb-3 max-w-3xl text-sm text-[var(--gray)]">
+            In dit project worden aanbevelingen na afronding van een analyse automatisch als{" "}
+            <strong>voorstel</strong> op je{" "}
+            <Link
+              href={`/projects/${projectId}/action-plan`}
+              className="font-medium text-[var(--blue)] underline underline-offset-2"
+            >
+              actieplan
+            </Link>{" "}
+            gezet. Bevestig ze daar als echte actie, of verwijder wat je niet nodig hebt.
+          </p>
+        ) : null}
         <div className="grid gap-3 md:grid-cols-2">
           {data.recommendations.map((r, i) => (
             <Card key={i} className="border-[var(--blue)]/20">

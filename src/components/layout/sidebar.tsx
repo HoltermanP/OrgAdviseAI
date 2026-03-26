@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { Boxes, LayoutDashboard, Menu, Settings, Sparkles } from "lucide-react";
+import {
+  Boxes,
+  Building2,
+  LayoutDashboard,
+  Menu,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,10 +20,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/organizations", label: "Organisaties", icon: Building2 },
   { href: "/projects", label: "Projecten", icon: Boxes },
   { href: "/models", label: "Modellen", icon: Sparkles },
   { href: "/settings", label: "Instellingen", icon: Settings },
@@ -26,14 +35,19 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden h-full w-56 flex-col border-r border-[var(--gray-light)] bg-[var(--navy)] text-white md:flex">
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-gradient-to-b from-[var(--navy)] via-[#05113a] to-[#020a26] text-white shadow-2xl md:sticky md:top-0 md:flex">
       <div className="border-b border-white/10 px-4 py-5">
-        <Link href="/dashboard" className="font-semibold tracking-tight">
-          OrgAdvisor AI
-        </Link>
-        <p className="mt-1 text-xs text-blue-200">AI-Group</p>
+        <BrandLogo
+          href="/dashboard"
+          compact
+          dark
+          className="[&>span:first-child]:h-16 [&>span:first-child]:w-52"
+        />
       </div>
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      <nav className="flex flex-1 flex-col gap-2 p-3">
+        <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-200/75">
+          Navigatie
+        </p>
         {links.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -42,21 +56,28 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                 active
-                  ? "bg-[var(--blue)] text-white"
-                  : "text-blue-100 hover:bg-white/10",
+                  ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow-lg shadow-blue-900/40 ring-1 ring-blue-200/35"
+                  : "text-blue-100/90 hover:bg-white/12 hover:text-white",
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {label}
+              <Icon
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-transform transition-colors",
+                  !active && "group-hover:scale-110",
+                )}
+              />
+              <span className="flex-1">{label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="border-t border-white/10 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-blue-200">Account</span>
+      <div className="border-t border-white/10 p-3">
+        <div className="rounded-xl bg-white/8 p-3 ring-1 ring-white/15 backdrop-blur-sm">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200/70">
+            Account
+          </p>
           <UserButton />
         </div>
       </div>
@@ -68,7 +89,7 @@ export function MobileSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-40 border-b border-[var(--gray-light)] bg-white px-4 py-3 md:hidden">
+    <div className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/95 px-4 py-3 backdrop-blur md:hidden">
       <div className="flex items-center justify-between gap-3">
         <Sheet>
           <SheetTrigger
@@ -78,12 +99,14 @@ export function MobileSidebar() {
           >
             <Menu className="h-4 w-4" />
           </SheetTrigger>
-          <SheetContent side="left" className="w-[85%] max-w-xs bg-[var(--navy)] p-0 text-white">
+          <SheetContent side="left" className="w-[88%] max-w-xs bg-[var(--navy)] p-0 text-white">
             <SheetHeader className="border-b border-white/10 px-4 py-5 text-left">
-              <SheetTitle className="text-white">OrgAdvisor AI</SheetTitle>
-              <SheetDescription className="text-blue-200">AI-Group</SheetDescription>
+              <SheetTitle className="text-white">
+                <BrandLogo href="/dashboard" dark />
+              </SheetTitle>
+              <SheetDescription className="text-blue-200">Adviesplatform</SheetDescription>
             </SheetHeader>
-            <nav className="flex flex-1 flex-col gap-1 p-3">
+            <nav className="flex flex-1 flex-col gap-2 p-3">
               {links.map(({ href, label, icon: Icon }) => {
                 const active =
                   pathname === href ||
@@ -93,9 +116,9 @@ export function MobileSidebar() {
                     key={href}
                     href={href}
                     className={cn(
-                      "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                       active
-                        ? "bg-[var(--blue)] text-white"
+                        ? "bg-gradient-to-r from-blue-500 to-blue-400 text-white"
                         : "text-blue-100 hover:bg-white/10",
                     )}
                   >
@@ -111,7 +134,7 @@ export function MobileSidebar() {
           href="/dashboard"
           className="truncate text-sm font-semibold tracking-tight text-[var(--navy)]"
         >
-          OrgAdvisor AI
+          AI-Group.nl
         </Link>
         <UserButton />
       </div>

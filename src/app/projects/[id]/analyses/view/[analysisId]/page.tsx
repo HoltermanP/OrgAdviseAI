@@ -73,7 +73,7 @@ export default function AnalysisViewPage() {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : data ? (
-          <AnalysisResult data={data} />
+          <AnalysisResult data={data} projectId={projectId} />
         ) : (
           <p className="text-[var(--gray)]">Geen resultaat beschikbaar.</p>
         )}

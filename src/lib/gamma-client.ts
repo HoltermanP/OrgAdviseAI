@@ -36,6 +36,9 @@ export async function createGammaPresentation(
     `Bron: adviesrapport "${reportTitle}".`,
     "Houd de inhoud zakelijk en in het Nederlands.",
     "Gebruik duidelijke titels per slide; geen fictieve cijfers toevoegen.",
+    "Volg de AI-Group.nl huisstijl: donkerblauwe basis, helderblauwe accenten, rustige witruimte.",
+    "Gebruik op de titel-/slot-slide expliciet de branding 'AI-Group.nl' en de tagline 'AI-first - we ship fast.'.",
+    "Houd de tone-of-voice professioneel, bondig en adviesgericht voor bestuur/directie.",
   ].join(" ");
 
   const body: Record<string, unknown> = {

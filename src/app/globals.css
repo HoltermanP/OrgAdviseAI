@@ -49,12 +49,12 @@
 }
 
 :root {
-  --navy: #0f172a;
-  --blue: #3b82f6;
-  --blue-light: #eff6ff;
-  --gray-dark: #1e293b;
-  --gray: #64748b;
-  --gray-light: #f8fafc;
+  --navy: #030b2d;
+  --blue: #2d6dff;
+  --blue-light: #eef3ff;
+  --gray-dark: #17213f;
+  --gray: #5f6f9f;
+  --gray-light: #f4f7ff;
   --cat-strategy: #534ab7;
   --cat-organization: #0f6e56;
   --cat-processes: #185fa5;
